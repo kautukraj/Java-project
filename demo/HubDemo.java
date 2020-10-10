@@ -8,15 +8,31 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class HubDemo extends Hub
 {
     Queue <Truck> queue = new PriorityBlockingQueue<>();
+    private static ArrayList <Hub> hubs = new ArrayList<>();
+    private static ArrayList <Highway> highways = new ArrayList<>();
+    private static AllPairsSP GraphObj;
+    private static int flag = 0;
 
     public HubDemo(Location loc)
     {
         super(loc);
+        hubs.add(this);
+        for (Highway highway: this.getHighways())
+        {
+            if (!highways.contains(highway))
+                highways.add(highway);
+        }
     }
 
     @Override
     public boolean add(Truck truck)
     {
+        if (flag == 0)
+        {
+            initGraph();
+            flag += 1;
+        }
+
         if (queue.size() < getCapacity())
         {
             queue.add(truck);
@@ -32,7 +48,7 @@ public class HubDemo extends Hub
         queue.remove(truck);
     }
 
-    @Override
+    /*@Override
     // we do not want to send it to where it came from
     public Highway getNextHighway(Hub last, Hub dest)
             // this function has been tested
@@ -42,20 +58,20 @@ public class HubDemo extends Hub
         Set <Hub> visited = new LinkedHashSet<Hub>();
         visited = depthFirstTraversal(NetworkDemo.graph, last);
 
-        /*for (Hub hub: visited)
-            System.out.println(hub.getLoc());*/
+        for (Hub hub: visited)
+            System.out.println(hub.getLoc());
 
-        /*it is guaranteed our our dest Hub will be in the visited sequence.
+        it is guaranteed our our dest Hub will be in the visited sequence.
         The 0th element in visited will be last Hub. The 1st element will be the next node we need to take. So, return
         the highway between 0th and 1st.
-         */
+
         // converting LinkedHashSet to List
         List<Hub> listVisited = new ArrayList<Hub>(visited);
         Hub currentDest = listVisited.get(1);
 
         return getConnectingHighway(last, currentDest);
 
-    }
+    }*/
 
     /*Set<Hub> depthFirstTraversal(Graph graph, Hub root)
     {
@@ -91,6 +107,7 @@ public class HubDemo extends Hub
         for (Truck truck: queue)
         {
             // if Truck is at the final hub then put it on the final road and remove it from the queue
+            // To put it on the final road, update the location of the truck
             // write code for this
             if (true)
             {
@@ -116,7 +133,7 @@ public class HubDemo extends Hub
 
     }
 
-    public Highway getConnectingHighway(Hub src, Hub dest)
+    /*public Highway getConnectingHighway(Hub src, Hub dest)
             // function has been tested
     {
         for (Highway highway: NetworkDemo.getAllHighways())
@@ -125,6 +142,169 @@ public class HubDemo extends Hub
                 return highway;
         }
         return null;
+    }*/
+
+    public static boolean isAdjacent(Hub hub1, Hub hub2)
+    {
+        for(Highway hwy : highways)
+        {
+            if(hwy.getStart() == hub1 && hwy.getEnd() == hub2)
+                return true;
+        }
+        return false;
     }
-};
+
+
+    public static Highway getConnector(Hub hub1, Hub hub2)
+    {
+        for(Highway hwy : highways)
+        {
+            if(hwy.getStart() == hub1 && hwy.getEnd() == hub2)
+                return hwy;
+        }
+        return null;
+    }
+
+    //next node in the shortest path from src to dest after src
+    @Override
+    public Highway getNextHighway(Hub from, Hub dest)
+    {
+        int index1 = hubs.indexOf(from), index2=hubs.indexOf(dest);
+        int next_index = AllPairsSP.constructPath(index1,index2).get(1);
+        return getConnector(hubs.get(index1),hubs.get(next_index));
+    }
+
+    /*@Override
+    protected void processQ(int deltaT)
+    {
+        //process truckQueue
+        for(Truck truck : queue)
+        {
+            if(truck.getLastHub() == this)
+                this.remove(truck); // this = calling Hub
+        }
+        while(getCapacity() - getHighways().size() > 0)
+        {
+            hubTrucks.add(truckQueue.get(0));
+            truckQueue.remove(0);
+        }
+    }*/
+
+    public static void initGraph()
+    {
+        int V = hubs.size();
+        int [][] Graph = new int[V][V];
+        for(int i=0; i<V; i++)
+        {
+            for (int j = 0; j <V; j++)
+            {
+                int INF = (int) 1e7;
+                if(i==j) Graph[i][j] = 0;
+                else if(HubDemo.isAdjacent(hubs.get(i),hubs.get(j)))
+                {
+                    Highway highway = getConnector(hubs.get(i),hubs.get(j));
+                    double length = Math.sqrt(Math.pow(highway.getStart().getLoc().getX() - highway.getEnd().getLoc().getX(), 2) +
+                            Math.pow(highway.getStart().getLoc().getY() - highway.getEnd().getLoc().getY(), 2));
+                    Graph[i][j] = (int) length;
+                }
+                else Graph[i][j] = INF;
+            }
+        }
+        GraphObj = new AllPairsSP(V,Graph);
+    }
+
+}
+
+class AllPairsSP
+{
+
+    static final int MAXN = 1000;
+
+    // Infinite value for array
+    static int INF = (int) 1e7;
+
+    static int[][] dis;
+    static int[][] Next;
+    static int V;
+
+    AllPairsSP(int V, int[][] graph)
+    {
+        AllPairsSP.V = V;
+        dis = new int[V][V];
+        Next = new int[V][V];
+        AllPairsSP.initialise(V,graph);
+        AllPairsSP.floydWarshall(V);
+    }
+
+    // Initializing the distance and
+// Next array
+    static void initialise(int V, int[][] graph)
+    {
+        for (int i = 0; i < V; i++)
+        {
+            for (int j = 0; j < V; j++)
+            {
+                dis[i][j] = graph[i][j];
+
+                // No edge between node
+                // i and j
+                if (graph[i][j] == INF)
+                    Next[i][j] = -1;
+                else
+                    Next[i][j] = j;
+            }
+        }
+    }
+
+    static Vector<Integer> constructPath(int u, int v)
+    {
+
+        // If there's no path between
+        // node u and v, simply return
+        // an empty array
+        if (Next[u][v] == -1)
+            return null;
+
+        // Storing the path in a vector
+        Vector<Integer> path = new Vector<>();
+        path.add(u);
+
+        while (u != v)
+        {
+            u = Next[u][v];
+            path.add(u);
+        }
+        return path;
+    }
+
+    static void floydWarshall(int V)
+    {
+        for (int k = 0; k < V; k++)
+        {
+            for (int i = 0; i < V; i++)
+            {
+                for (int j = 0; j < V; j++)
+                {
+
+                    // We cannot travel through
+                    // edge that doesn't exist
+                    if (dis[i][k] == INF ||
+                            dis[k][j] == INF)
+                        continue;
+
+                    if (dis[i][j] > dis[i][k] +
+                            dis[k][j]) {
+                        dis[i][j] = dis[i][k] +
+                                dis[k][j];
+                        Next[i][j] = Next[i][k];
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+
 

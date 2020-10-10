@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class Node
+/*class Node
 {
     Hub hub;
     Node (Hub hub)
@@ -28,9 +28,9 @@ class Node
     {
         return this.hub.hashCode();
     }
-}
+}*/
 
-class Graph
+/*class Graph
 {
     private final Map<Node, List<Node>> adjNodes = new HashMap<>();
 
@@ -39,8 +39,8 @@ class Graph
         //System.out.println("Call to addNode");
         adjNodes.putIfAbsent(new Node(hub), new ArrayList<>());
 
-        /*for (Node node: adjNodes.keySet())
-            System.out.println(node.hub.getLoc());*/
+        for (Node node: adjNodes.keySet())
+            System.out.println(node.hub.getLoc());
     }
 
     void removeNode(Hub hub)
@@ -58,18 +58,18 @@ class Graph
         adjNodes.get(node1).add(node2);
         // adjNodes.get(node2).add(node1); // don't add the reverse arrow
 
-        /*for (List<Node> l: adjNodes.values())
+        for (List<Node> l: adjNodes.values())
         {
             for (Node n: l)
             {
                 System.out.print(n.hub.getLoc());
             }
             System.out.println();
-        }*/
+        }
 
-    }
+    }*/
 
-    void removeEdge(Hub hub1, Hub hub2)
+    /*void removeEdge(Hub hub1, Hub hub2)
     {
         Node v1 = new Node (hub1);
         Node v2 = new Node (hub2);
@@ -85,27 +85,32 @@ class Graph
     {
         return adjNodes.get(new Node(hub));
     }
-}
+}*/
 
 public class NetworkDemo extends Network
 {
     ArrayList <Hub> hubs = new ArrayList<>();
     static ArrayList <Highway> highways = new ArrayList<>();
     ArrayList <Truck> trucks = new ArrayList<>();
-    static Graph graph = new Graph();
+    //static Graph graph = new Graph();
 
     @Override
     public void add(Hub hub)
     {
         hubs.add(hub);
-        graph.addNode(hub);
+        //graph.addNode(hub);
     }
 
     @Override
     public void add(Highway hwy)
     {
         highways.add(hwy);
-        graph.addEdge(hwy.getStart(), hwy.getEnd());
+        for (Hub hub: hubs)
+        {
+            if (hwy.getStart() == hub)
+                hub.add(hwy);
+        }
+        //graph.addEdge(hwy.getStart(), hwy.getEnd());
     }
 
     public static ArrayList<Highway> getAllHighways()

@@ -8,6 +8,7 @@ public class TruckDemo extends Truck
 {
     Highway highway = null;
     int currentTime = 0;
+    static int count = 0;
 
     @Override
     public Hub getLastHub()
@@ -40,11 +41,12 @@ public class TruckDemo extends Truck
         System.out.println("Call to update");
         /*
         Case 1: if currentTime < this.startTime then do nothing
-        Case 2: Truck need not handle this case
-        Case 3:
-        Case 4: Truck does not handle this right???
+        Case 2: If at a hub, tries to move on to next highway in its route: no need to handle this
+        Case 3: If on a road/highway, moves towards next Hub: needs to be handled
+        Case 4: If at dest Hub, moves towards dest: no need to handle this
+
         increment currentTime by deltaT on each call
-        update position as x = speed * deltaT
+        update position as x = speed * deltaT * some trig stuff
          */
     }
 
@@ -53,7 +55,8 @@ public class TruckDemo extends Truck
     @Override
     public String getTruckName()
     {
-        return "Truck19043";
+        count += 1;
+        return super.getName() + "IMT2019043" + Integer.toString(count);
     }
     // IMT2019043
 }
