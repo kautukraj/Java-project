@@ -3,42 +3,54 @@ package demo;
 import base.*;
 
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class HubDemo extends Hub
 {
-    Queue <Truck> queue = new PriorityBlockingQueue<>();
-    private static ArrayList <Hub> hubs = new ArrayList<>();
-    private static ArrayList <Highway> highways = new ArrayList<>();
+    Queue<Truck> queue = new LinkedList<>(); // use normal queue here
+    private static ArrayList<Hub> hubs = new ArrayList<>();
+    private static ArrayList<Highway> highways = new ArrayList<>();
     private static AllPairsSP GraphObj;
-    private static int flag = 0;
 
     public HubDemo(Location loc)
     {
         super(loc);
         hubs.add(this);
-        for (Highway highway: this.getHighways())
+        /*for (Highway highway: this.getHighways())
         {
             if (!highways.contains(highway))
                 highways.add(highway);
-        }
+        }*/
+    }
+
+    @Override // this wasn't an abstract function but still we are overloading
+    public void add(Highway hwy)
+    {
+        super.add(hwy);
+
+        if(!highways.contains(hwy))
+            highways.add(hwy);
+
+        initGraph();
+    }
+
+
+    public void test()
+    {
+        System.out.println(getNextHighway(hubs.get(6), hubs.get(5)).getStart().getLoc() + " " + getNextHighway(hubs.get(6), hubs.get(5)).getEnd().getLoc() + " " +
+                getNextHighway(hubs.get(6), hubs.get(5)).getMaxSpeed());
     }
 
     @Override
     public boolean add(Truck truck)
     {
-        if (flag == 0)
-        {
-            initGraph();
-            flag += 1;
-        }
-
         if (queue.size() < getCapacity())
         {
             queue.add(truck);
             return true;
-        }
-        else
+        } else
             return false;
     }
 
@@ -93,6 +105,14 @@ public class HubDemo extends Hub
         return visited;
     }*/
 
+    //next node in the shortest path from src to dest after src
+    @Override
+    public Highway getNextHighway(Hub from, Hub dest)
+    {
+        int index1=hubs.indexOf(from),index2=hubs.indexOf(dest);
+        int next_index = AllPairsSP.constructPath(index1,index2).get(1);
+        return getConnector(hubs.get(index1),hubs.get(next_index));
+    }
 
     @Override
     protected void processQ(int deltaT)
@@ -104,7 +124,7 @@ public class HubDemo extends Hub
         OR, Hub has to send the truck to the final station
          */
         System.out.println("Call to processQ");
-        for (Truck truck: queue)
+        for (Truck truck : queue)
         {
             // if Truck is at the final hub then put it on the final road and remove it from the queue
             // To put it on the final road, update the location of the truck
@@ -125,13 +145,13 @@ public class HubDemo extends Hub
                 {
                     System.out.println("Truck sent to highway");
                     this.remove(truck); // remove it from the queue
-                }
-                else
+                } else
                     System.out.println("Highway is full");
             }
         }
 
     }
+
 
     /*public Highway getConnectingHighway(Hub src, Hub dest)
             // function has been tested
@@ -165,30 +185,34 @@ public class HubDemo extends Hub
         return null;
     }
 
-    //next node in the shortest path from src to dest after src
-    @Override
-    public Highway getNextHighway(Hub from, Hub dest)
-    {
-        int index1 = hubs.indexOf(from), index2=hubs.indexOf(dest);
-        int next_index = AllPairsSP.constructPath(index1,index2).get(1);
-        return getConnector(hubs.get(index1),hubs.get(next_index));
-    }
-
     /*@Override
     protected void processQ(int deltaT)
     {
-        //process truckQueue
+        //process truckQueue - if last hub before station, send it towards station
         for(Truck truck : queue)
         {
-            if(truck.getLastHub() == this)
-                this.remove(truck); // this = calling Hub
-        }
-        while(getCapacity() - getHighways().size() > 0)
-        {
-            hubTrucks.add(truckQueue.get(0));
-            truckQueue.remove(0);
+            //get dest hub
+            Hub result=null;
+            int minima = Integer.MAX_VALUE;
+            for(Hub h : hubs)
+            {
+                if(h.getLoc().distSqrd(truck.getDest()) < minima)
+                {
+                    minima = h.getLoc().distSqrd(truck.getDest());
+                    result = h;
+                }
+            }
+            //final hub before station
+            if(this == result)
+            {
+                continue;
+            }
+            //intermediate hub - if entry to highway is successful
+            truck.enter(this.getNextHighway(this,result));
+            if(truck.getLastHub() == this) queue.remove(truck);
         }
     }*/
+
 
     public static void initGraph()
     {
@@ -236,8 +260,7 @@ class AllPairsSP
         AllPairsSP.floydWarshall(V);
     }
 
-    // Initializing the distance and
-// Next array
+    // Initializing the distance and Next array
     static void initialise(int V, int[][] graph)
     {
         for (int i = 0; i < V; i++)
@@ -303,7 +326,6 @@ class AllPairsSP
         }
     }
 }
-
 
 
 

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 /*class Node
 {
     Hub hub;
@@ -116,7 +117,7 @@ public class NetworkDemo extends Network
     public static ArrayList<Highway> getAllHighways()
     {
         return highways;
-    }
+    } // ???
 
     @Override
     public void add(Truck truck)
