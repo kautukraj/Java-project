@@ -114,15 +114,15 @@ public class HubDemo extends Hub
         return getConnector(hubs.get(index1),hubs.get(next_index));
     }
 
-    @Override
+    /*@Override
     protected void processQ(int deltaT)
     {
         // queue is the Queue object
-        /*
-        Two situations:
-        Hub has to send the truck to the next hub.
-        OR, Hub has to send the truck to the final station
-         */
+
+        //Two situations:
+        //Hub has to send the truck to the next hub.
+        //OR, Hub has to send the truck to the final station
+
         System.out.println("Call to processQ");
         for (Truck truck : queue)
         {
@@ -133,9 +133,9 @@ public class HubDemo extends Hub
             {
 
             }
-            /*if Truck is at an intermediate Hub then call getNextHighway and try to put it on that highway if capacity
-            permits and remove it from the queue. For getNextHighway, src is "this" hub and dest needs to be found out.
-            */
+            //if Truck is at an intermediate Hub then call getNextHighway and try to put it on that highway if capacity
+            //permits and remove it from the queue. For getNextHighway, src is "this" hub and dest needs to be found out.
+
             else
             {
                 Hub destHub = Network.getNearestHub(truck.getDest());
@@ -150,7 +150,7 @@ public class HubDemo extends Hub
             }
         }
 
-    }
+    }*/
 
 
     /*public Highway getConnectingHighway(Hub src, Hub dest)
@@ -163,6 +163,28 @@ public class HubDemo extends Hub
         }
         return null;
     }*/
+
+    @Override
+    protected void processQ(int deltaT)
+    {
+        // if last hub before station (i.e. dest hub), send it towards station without any checks
+        for(Truck truck : queue)
+        {
+            // final hub before station
+            if(this == Network.getNearestHub(truck.getDest()))
+            {
+                queue.remove(truck);
+                continue;
+            }
+
+            //intermediate hub - if entry to highway is successful
+            truck.enter(this.getNextHighway(this, Network.getNearestHub(truck.getDest())));
+
+            if(truck.getLastHub() == this) // why is this needed???
+                queue.remove(truck);
+        }
+    }
+
 
     public static boolean isAdjacent(Hub hub1, Hub hub2)
     {

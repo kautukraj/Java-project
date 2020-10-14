@@ -104,8 +104,9 @@ public class TruckDemo extends Truck
                             (double) (this.getDest().getX() - Network.getNearestHub(this.getDest()).getLoc().getX());
                 }
             }
-            sin = m / Math.pow(1 - (m * m), 0.5); // should be +
-            cos = 1 / Math.pow(1 - (m * m), 0.5); // should be +
+
+            sin = m / Math.pow(1 + (m * m), 0.5); // should be +
+            cos = 1 / Math.pow(1 + (m * m), 0.5); // should be +
             this.setLoc(new Location(this.getLoc().getX() + (int) (v * deltaT * cos),
                     this.getLoc().getY() + (int) (v * deltaT * sin)));
         }
