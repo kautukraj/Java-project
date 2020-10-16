@@ -3,9 +3,6 @@ package demo;
 import base.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 /*class Node
@@ -123,16 +120,13 @@ public class NetworkDemo extends Network
     public void add(Truck truck)
     {
         trucks.add(truck);
-        // truck has nothing to do with our graph
-
-        /*for (Truck t: trucks)
-            System.out.println(t); // setup has two trucks per input line */
     }
 
     @Override
     public void start()
     // derived class calls start on each of the Hubs and Trucks
     {
+        System.out.println("Start of Network called");
         for (Hub hub: hubs)
             hub.start();
 
@@ -145,6 +139,7 @@ public class NetworkDemo extends Network
     // derived class calls draw on each hub, highway, and truck
     // passing in display
     {
+        System.out.println("Redisplay of Network called");
         for (Hub hub: hubs)
             hub.draw(disp);
 

@@ -10,13 +10,13 @@ public class HighwayDemo extends Highway
     ArrayList <Truck> trucks = new ArrayList<>();
 
     @Override
-    public boolean hasCapacity()
+    public synchronized boolean hasCapacity()
     {
         return currentCapacity < getCapacity();
     }
 
     @Override
-    public boolean add(Truck truck)
+    public synchronized boolean add(Truck truck)
     {
         if (currentCapacity < getCapacity())
         {
@@ -28,7 +28,7 @@ public class HighwayDemo extends Highway
     }
 
     @Override
-    public void remove(Truck truck)
+    public synchronized void remove(Truck truck)
     {
         trucks.remove(truck);
     }

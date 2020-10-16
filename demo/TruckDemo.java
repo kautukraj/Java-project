@@ -9,12 +9,21 @@ public class TruckDemo extends Truck
     static int count = 0;
     private boolean flag = false; // on src to srchub road
 
+    static int margin = 50;
+
     @Override
     public Hub getLastHub()
     {
-        // returns null when the Truck has just started moving
-        return this.highway.getStart();
+        if(highway != null)
+            return highway.getStart();
+            //if on source-network link
+        else if(!flag)
+            return null;
+            //from last hub to dest
+        else
+            return Network.getNearestHub(this.getDest());
     }
+
 
 
     @Override
@@ -51,65 +60,77 @@ public class TruckDemo extends Truck
     }*/
 
     @Override
-    protected void update(int deltaT)
+    protected synchronized void update(int deltaT)
     {
-        // keep track of the time. currentTime = 0 and increment it everytime
-        // if currentTime < this.startTime then do nothing
-        
         currentTime += deltaT; // increment the time
-        if (currentTime < this.getStartTime())
+        //if before start time
+        if (currentTime < this.getStartTime()) return;
+
+        Location startloc, endloc;
+
+        //if location is getHubNearestToLoc(dest) - set highway to null
+        int v;
+        double m, sin, cos;
+        //if inside the network
+        if(highway != null)
         {
-            // do nothing
+            //stationary
+            //if(this.getLoc() == highway.getEnd().getLoc())
+            if (sameSpot(this.getLoc(), highway.getEnd().getLoc()))
+            {
+                //if(this.getLoc() == Network.getNearestHub(this.getDest()).getLoc())
+                if (sameSpot(this.getLoc(), Network.getNearestHub(this.getDest()).getLoc()))
+                highway = null;
+
             return;
-        }
-        else
-        {
-            int v;
-            double m, sin, cos;
-
-            if (highway != null) // if inside the network
-            {
-                // stationary
-                if (this.getLoc() == highway.getEnd().getLoc())
-                {
-                    if (this.getLoc() == Network.getNearestHub(this.getDest()).getLoc()) // it is at Hub nearest to dest
-                        highway = null; // exiting the network to get onto road to dest station
-                    return;
-                }
-
-                // on highway or exiting hub
-                else
-                {
-                    v = highway.getMaxSpeed();
-                    m = (highway.getStart().getLoc().getY() - highway.getEnd().getLoc().getY()) /
-                            (double) (highway.getStart().getLoc().getX() - highway.getEnd().getLoc().getX());
-                    // m = y2 - y1 / x2 - x1
-                }
             }
-
-            // network-station link, ie, on a road
+            //on highway or exiting hub
             else
-            {
-                //set some speed for network-station link as Sir said
-                v = 50;
-
-                if (!flag) // start to network
                 {
-                    m = (this.getSource().getY() - Network.getNearestHub(this.getSource()).getLoc().getY()) /
-                            (double) (this.getSource().getX() - Network.getNearestHub(this.getSource()).getLoc().getX());
-                    // should be ulta right ??? but still works
-                } else // network to end
-                {
-                    m = (this.getDest().getY() - Network.getNearestHub(this.getDest()).getLoc().getY()) /
-                            (double) (this.getDest().getX() - Network.getNearestHub(this.getDest()).getLoc().getX());
-                }
+                v = highway.getMaxSpeed();
+                m = (highway.getStart().getLoc().getY() - highway.getEnd().getLoc().getY()) / (double)(highway.getStart().getLoc().getX() - highway.getEnd().getLoc().getX());
+                startloc = highway.getStart().getLoc();
+                    /*m = (this.getLoc().getY() - highway.getEnd().getLoc().getY()) / (double)(this.getLoc().getX() - highway.getEnd().getLoc().getX());
+                    startloc = this.getLoc();*/
+                endloc = highway.getEnd().getLoc();
             }
-
-            sin = m / Math.pow(1 + (m * m), 0.5); // should be +
-            cos = 1 / Math.pow(1 + (m * m), 0.5); // should be +
-            this.setLoc(new Location(this.getLoc().getX() + (int) (v * deltaT * cos),
-                    this.getLoc().getY() + (int) (v * deltaT * sin)));
         }
+
+        //network-station link
+        else
+            {
+            //set some speed for network-station link
+            v = 50;
+            //start to network
+            if(!flag)
+            {
+                m = (this.getSource().getY() - Network.getNearestHub(this.getSource()).getLoc().getY()) / (double) (this.getSource().getX() - Network.getNearestHub(this.getSource()).getLoc().getX());
+                startloc = this.getSource();
+                endloc = Network.getNearestHub(this.getSource()).getLoc();
+            }
+            //network to end
+            else
+                {
+                //if(this.getLoc() == this.getDest())
+                    if (sameSpot(this.getLoc(), this.getDest()))
+                    return;
+
+                m = (this.getDest().getY() - Network.getNearestHub(this.getDest()).getLoc().getY()) / (double) (this.getDest().getX() - Network.getNearestHub(this.getDest()).getLoc().getX());
+                startloc = Network.getNearestHub(this.getDest()).getLoc();
+                endloc = this.getDest();
+            }
+        }
+        sin = (endloc.getY() < startloc.getY() ? -1 : 1) * (m / Math.pow(1 + (m * m),0.5));
+        cos = (endloc.getX() < startloc.getX() ? -1 : 1) * (1 / Math.pow(1 + (m * m),0.5));
+        this.setLoc(new Location(this.getLoc().getX() + (int)(v * (deltaT/300) * cos),this.getLoc().getY() + (int)(v * (deltaT/300) * sin)));
+    }
+
+    private boolean sameSpot(Location l1, Location l2)
+    {
+        if((l1.getY() >= l2.getY() + margin) && (l1.getY() <= l2.getY() + margin) && (l1.getX() >= l2.getX() + margin) && (l1.getX() <= l2.getX() + margin))
+            return true;
+
+        return false;
     }
 
 
@@ -118,8 +139,7 @@ public class TruckDemo extends Truck
     @Override
     public String getTruckName()
     {
-        count += 1;
-        return super.getName() + "-IMT2019043";
+        return super.getTruckName() + 19043;
     }
     // IMT2019043
 }

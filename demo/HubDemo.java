@@ -2,10 +2,10 @@ package demo;
 
 import base.*;
 
-import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Vector;
 
 public class HubDemo extends Hub
 {
@@ -18,14 +18,9 @@ public class HubDemo extends Hub
     {
         super(loc);
         hubs.add(this);
-        /*for (Highway highway: this.getHighways())
-        {
-            if (!highways.contains(highway))
-                highways.add(highway);
-        }*/
     }
 
-    @Override // this wasn't an abstract function but still we are overloading
+    /*@Override // this wasn't an abstract function but still we are overloading
     public void add(Highway hwy)
     {
         super.add(hwy);
@@ -34,13 +29,33 @@ public class HubDemo extends Hub
             highways.add(hwy);
 
         initGraph();
+    }*/
+
+    @Override
+    public synchronized void add(Highway hwy)
+    {
+        if(!this.getHighways().contains(hwy))
+        {
+            super.add(hwy);
+            if(!highways.contains(hwy))
+                highways.add(hwy);
+
+            initGraph();
+        }
     }
 
 
-    public void test()
+    public static void test()
     {
-        System.out.println(getNextHighway(hubs.get(6), hubs.get(5)).getStart().getLoc() + " " + getNextHighway(hubs.get(6), hubs.get(5)).getEnd().getLoc() + " " +
-                getNextHighway(hubs.get(6), hubs.get(5)).getMaxSpeed());
+        System.out.println("hello");
+        for (Hub hub: hubs)
+        {
+            for (Highway highway : hub.getHighways())
+            {
+                System.out.println(highway.getStart().getLoc() + " " + highway.getEnd().getLoc());
+            }
+            System.out.println();
+        }
     }
 
     @Override
@@ -50,7 +65,8 @@ public class HubDemo extends Hub
         {
             queue.add(truck);
             return true;
-        } else
+        }
+        else
             return false;
     }
 
@@ -58,6 +74,17 @@ public class HubDemo extends Hub
     protected void remove(Truck truck)
     {
         queue.remove(truck);
+    }
+
+    //next node in the shortest path from src to dest after src
+    @Override
+    public Highway getNextHighway(Hub from, Hub dest)
+    {
+        int fromIndex = hubs.indexOf(from);
+        int destIndex = hubs.indexOf(dest);
+
+        int nextIndex = AllPairsSP.constructPath(fromIndex, destIndex).get(1);
+        return getConnector(hubs.get(fromIndex), hubs.get(nextIndex));
     }
 
     /*@Override
@@ -105,15 +132,6 @@ public class HubDemo extends Hub
         return visited;
     }*/
 
-    //next node in the shortest path from src to dest after src
-    @Override
-    public Highway getNextHighway(Hub from, Hub dest)
-    {
-        int index1=hubs.indexOf(from),index2=hubs.indexOf(dest);
-        int next_index = AllPairsSP.constructPath(index1,index2).get(1);
-        return getConnector(hubs.get(index1),hubs.get(next_index));
-    }
-
     /*@Override
     protected void processQ(int deltaT)
     {
@@ -152,7 +170,6 @@ public class HubDemo extends Hub
 
     }*/
 
-
     /*public Highway getConnectingHighway(Hub src, Hub dest)
             // function has been tested
     {
@@ -167,6 +184,7 @@ public class HubDemo extends Hub
     @Override
     protected void processQ(int deltaT)
     {
+        System.out.println("processQ called");
         // if last hub before station (i.e. dest hub), send it towards station without any checks
         for(Truck truck : queue)
         {
@@ -249,6 +267,7 @@ public class HubDemo extends Hub
                 else if(HubDemo.isAdjacent(hubs.get(i),hubs.get(j)))
                 {
                     Highway highway = getConnector(hubs.get(i),hubs.get(j));
+                    assert highway != null;
                     double length = Math.sqrt(Math.pow(highway.getStart().getLoc().getX() - highway.getEnd().getLoc().getX(), 2) +
                             Math.pow(highway.getStart().getLoc().getY() - highway.getEnd().getLoc().getY(), 2));
                     Graph[i][j] = (int) length;
